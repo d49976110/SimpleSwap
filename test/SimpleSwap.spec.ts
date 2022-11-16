@@ -299,16 +299,16 @@ describe("SimpleSwap Spec", () => {
             )
         })
 
-        // it("forces error, when amountOut is zero", async () => {
-        //     const tokenIn = tokenA.address
-        //     const tokenOut = tokenB.address
-        //     const amountIn = 1
+        it("forces error, when amountOut is zero", async () => {
+            const tokenIn = tokenA.address
+            const tokenOut = tokenB.address
+            const amountIn = 1
 
-        //     // Amount can not be zero
-        //     await expect(simpleSwap.connect(taker).swap(tokenIn, tokenOut, amountIn)).to.revertedWith(
-        //         "SimpleSwap: INSUFFICIENT_OUTPUT_AMOUNT",
-        //     )
-        // })
+            // Amount can not be zero
+            await expect(simpleSwap.connect(taker).swap(tokenIn, tokenOut, amountIn)).to.revertedWith(
+                "SimpleSwap: INSUFFICIENT_OUTPUT_AMOUNT",
+            )
+        })
 
         it("should be able to swap from tokenA to tokenB", async () => {
             const tokenIn = tokenA.address
@@ -337,73 +337,73 @@ describe("SimpleSwap Spec", () => {
         })
     })
 
-    // describe("# removeLiquidity", () => {
-    //     beforeEach("maker add liquidity", async () => {
-    //         const amountA = parseUnits("100", tokenADecimals)
-    //         const amountB = parseUnits("100", tokenBDecimals)
-    //         await simpleSwap.connect(maker).addLiquidity(amountA, amountB)
+    describe("# removeLiquidity", () => {
+        beforeEach("maker add liquidity", async () => {
+            const amountA = parseUnits("100", tokenADecimals)
+            const amountB = parseUnits("100", tokenBDecimals)
+            await simpleSwap.connect(maker).addLiquidity(amountA, amountB)
 
-    //         await simpleSwap.connect(maker).approve(simpleSwap.address, ethers.constants.MaxUint256)
-    //     })
+            await simpleSwap.connect(maker).approve(simpleSwap.address, ethers.constants.MaxUint256)
+        })
 
-    //     it("forces error, when lp token amount is zero", async () => {
-    //         await expect(simpleSwap.connect(maker).removeLiquidity(parseUnits("0", slpDecimals))).to.revertedWith(
-    //             "SimpleSwap: INSUFFICIENT_LIQUIDITY_BURNED",
-    //         )
-    //     })
+        it("forces error, when lp token amount is zero", async () => {
+            await expect(simpleSwap.connect(maker).removeLiquidity(parseUnits("0", slpDecimals))).to.revertedWith(
+                "SimpleSwap: INSUFFICIENT_LIQUIDITY_BURNED",
+            )
+        })
 
-    //     // skip this, because ERC20 will handle this error
-    //     it.skip("forces error, when lp token amount is greater than maker balance")
+        // skip this, because ERC20 will handle this error
+        it.skip("forces error, when lp token amount is greater than maker balance")
 
-    //     it("should be able to remove liquidity when lp token amount greater than zero", async () => {
-    //         const lpTokenAmount = parseUnits("10", slpDecimals)
-    //         const [reserveA, reserveB] = await simpleSwap.getReserves()
-    //         const totalSupply = await simpleSwap.totalSupply()
-    //         const amountA = lpTokenAmount.mul(reserveA).div(totalSupply)
-    //         const amountB = lpTokenAmount.mul(reserveB).div(totalSupply)
+        it("should be able to remove liquidity when lp token amount greater than zero", async () => {
+            const lpTokenAmount = parseUnits("10", slpDecimals)
+            const [reserveA, reserveB] = await simpleSwap.getReserves()
+            const totalSupply = await simpleSwap.totalSupply()
+            const amountA = lpTokenAmount.mul(reserveA).div(totalSupply)
+            const amountB = lpTokenAmount.mul(reserveB).div(totalSupply)
 
-    //         await expect(simpleSwap.connect(maker).removeLiquidity(lpTokenAmount))
-    //             .to.changeTokenBalances(tokenA, [maker, simpleSwap], [amountA, amountA.mul(-1)])
-    //             .to.changeTokenBalances(tokenB, [maker, simpleSwap], [amountB, amountB.mul(-1)])
-    //             .to.emit(simpleSwap, "RemoveLiquidity")
-    //             .withArgs(maker.address, amountA, amountB, lpTokenAmount)
-    //     })
+            await expect(simpleSwap.connect(maker).removeLiquidity(lpTokenAmount))
+                .to.changeTokenBalances(tokenA, [maker, simpleSwap], [amountA, amountA.mul(-1)])
+                .to.changeTokenBalances(tokenB, [maker, simpleSwap], [amountB, amountB.mul(-1)])
+                .to.emit(simpleSwap, "RemoveLiquidity")
+                .withArgs(maker.address, amountA, amountB, lpTokenAmount)
+        })
 
-    //     it("should be able to remove liquidity after swap", async () => {
-    //         // taker swap 10 tokenA to tokenB
-    //         await simpleSwap.connect(taker).swap(tokenA.address, tokenB.address, parseUnits("10", tokenADecimals))
+        it("should be able to remove liquidity after swap", async () => {
+            // taker swap 10 tokenA to tokenB
+            await simpleSwap.connect(taker).swap(tokenA.address, tokenB.address, parseUnits("10", tokenADecimals))
 
-    //         // maker remove liquidity
-    //         const lpTokenAmount = parseUnits("10", slpDecimals)
-    //         const [reserveA, reserveB] = await simpleSwap.getReserves()
-    //         const totalSupply = await simpleSwap.totalSupply()
-    //         const amountA = lpTokenAmount.mul(reserveA).div(totalSupply)
-    //         const amountB = lpTokenAmount.mul(reserveB).div(totalSupply)
-    //         await expect(simpleSwap.connect(maker).removeLiquidity(lpTokenAmount))
-    //             .to.changeTokenBalances(tokenA, [maker, simpleSwap], [amountA, amountA.mul(-1)])
-    //             .to.changeTokenBalances(tokenB, [maker, simpleSwap], [amountB, amountB.mul(-1)])
-    //             .to.emit(simpleSwap, "RemoveLiquidity")
-    //             .withArgs(maker.address, amountA, amountB, lpTokenAmount)
-    //     })
-    // })
+            // maker remove liquidity
+            const lpTokenAmount = parseUnits("10", slpDecimals)
+            const [reserveA, reserveB] = await simpleSwap.getReserves()
+            const totalSupply = await simpleSwap.totalSupply()
+            const amountA = lpTokenAmount.mul(reserveA).div(totalSupply)
+            const amountB = lpTokenAmount.mul(reserveB).div(totalSupply)
+            await expect(simpleSwap.connect(maker).removeLiquidity(lpTokenAmount))
+                .to.changeTokenBalances(tokenA, [maker, simpleSwap], [amountA, amountA.mul(-1)])
+                .to.changeTokenBalances(tokenB, [maker, simpleSwap], [amountB, amountB.mul(-1)])
+                .to.emit(simpleSwap, "RemoveLiquidity")
+                .withArgs(maker.address, amountA, amountB, lpTokenAmount)
+        })
+    })
 
-    // describe("# getReserves", () => {
-    //     it("should be able to get reserves", async () => {
-    //         const [reserveA, reserveB] = await simpleSwap.getReserves()
-    //         expect(reserveA).to.eq(0)
-    //         expect(reserveB).to.eq(0)
-    //     })
+    describe("# getReserves", () => {
+        it("should be able to get reserves", async () => {
+            const [reserveA, reserveB] = await simpleSwap.getReserves()
+            expect(reserveA).to.eq(0)
+            expect(reserveB).to.eq(0)
+        })
 
-    //     it("should be able to get reserves after add liquidity", async () => {
-    //         const amountA = parseUnits("100", tokenADecimals)
-    //         const amountB = parseUnits("100", tokenBDecimals)
-    //         await simpleSwap.connect(maker).addLiquidity(amountA, amountB)
+        it("should be able to get reserves after add liquidity", async () => {
+            const amountA = parseUnits("100", tokenADecimals)
+            const amountB = parseUnits("100", tokenBDecimals)
+            await simpleSwap.connect(maker).addLiquidity(amountA, amountB)
 
-    //         const [reserveA, reserveB] = await simpleSwap.getReserves()
-    //         expect(reserveA).to.eq(amountA)
-    //         expect(reserveB).to.eq(amountB)
-    //     })
-    // })
+            const [reserveA, reserveB] = await simpleSwap.getReserves()
+            expect(reserveA).to.eq(amountA)
+            expect(reserveB).to.eq(amountB)
+        })
+    })
 
     describe("# getTokenA", () => {
         it("should be able to get tokenA", async () => {
@@ -419,74 +419,74 @@ describe("SimpleSwap Spec", () => {
         })
     })
 
-    // describe("lp token", () => {
-    //     beforeEach("maker add liquidity", async () => {
-    //         const amountA = parseUnits("100", tokenADecimals)
-    //         const amountB = parseUnits("100", tokenBDecimals)
-    //         await simpleSwap.connect(maker).addLiquidity(amountA, amountB)
+    describe("lp token", () => {
+        beforeEach("maker add liquidity", async () => {
+            const amountA = parseUnits("100", tokenADecimals)
+            const amountB = parseUnits("100", tokenBDecimals)
+            await simpleSwap.connect(maker).addLiquidity(amountA, amountB)
 
-    //         await simpleSwap.connect(maker).approve(simpleSwap.address, ethers.constants.MaxUint256)
-    //     })
+            await simpleSwap.connect(maker).approve(simpleSwap.address, ethers.constants.MaxUint256)
+        })
 
-    //     it("should be able to get lp token after adding liquidity", async () => {
-    //         const amountA = parseUnits("100", tokenADecimals)
-    //         const amountB = parseUnits("100", tokenBDecimals)
-    //         const liquidity = sqrt(amountA.mul(amountB))
+        it("should be able to get lp token after adding liquidity", async () => {
+            const amountA = parseUnits("100", tokenADecimals)
+            const amountB = parseUnits("100", tokenBDecimals)
+            const liquidity = sqrt(amountA.mul(amountB))
 
-    //         await expect(simpleSwap.connect(maker).addLiquidity(amountA, amountB))
-    //             .to.changeTokenBalances(simpleSwap, [maker], [liquidity])
-    //             .to.emit(simpleSwap, "Transfer")
-    //             .withArgs(ethers.constants.AddressZero, maker.address, liquidity)
-    //     })
+            await expect(simpleSwap.connect(maker).addLiquidity(amountA, amountB))
+                .to.changeTokenBalances(simpleSwap, [maker], [liquidity])
+                .to.emit(simpleSwap, "Transfer")
+                .withArgs(ethers.constants.AddressZero, maker.address, liquidity)
+        })
 
-    //     it("should be able to repay lp token after removing liquidity", async () => {
-    //         const lpTokenAmount = parseUnits("10", slpDecimals)
+        it("should be able to repay lp token after removing liquidity", async () => {
+            const lpTokenAmount = parseUnits("10", slpDecimals)
 
-    //         await expect(simpleSwap.connect(maker).removeLiquidity(lpTokenAmount))
-    //             .to.changeTokenBalances(simpleSwap, [maker], [lpTokenAmount.mul(-1)])
-    //             .to.emit(simpleSwap, "Transfer")
-    //             .withArgs(simpleSwap.address, ethers.constants.AddressZero, lpTokenAmount)
-    //     })
+            await expect(simpleSwap.connect(maker).removeLiquidity(lpTokenAmount))
+                .to.changeTokenBalances(simpleSwap, [maker], [lpTokenAmount.mul(-1)])
+                .to.emit(simpleSwap, "Transfer")
+                .withArgs(simpleSwap.address, ethers.constants.AddressZero, lpTokenAmount)
+        })
 
-    //     it("should be able to transfer lp token", async () => {
-    //         const lpTokenAmount = parseUnits("42", slpDecimals)
+        it("should be able to transfer lp token", async () => {
+            const lpTokenAmount = parseUnits("42", slpDecimals)
 
-    //         await expect(simpleSwap.connect(maker).transfer(taker.address, lpTokenAmount))
-    //             .to.changeTokenBalances(simpleSwap, [maker, taker], [lpTokenAmount.mul(-1), lpTokenAmount])
-    //             .to.emit(simpleSwap, "Transfer")
-    //             .withArgs(maker.address, taker.address, lpTokenAmount)
-    //     })
+            await expect(simpleSwap.connect(maker).transfer(taker.address, lpTokenAmount))
+                .to.changeTokenBalances(simpleSwap, [maker, taker], [lpTokenAmount.mul(-1), lpTokenAmount])
+                .to.emit(simpleSwap, "Transfer")
+                .withArgs(maker.address, taker.address, lpTokenAmount)
+        })
 
-    //     it("should be able to approve lp token", async () => {
-    //         const lpTokenAmount = parseUnits("42", slpDecimals)
+        it("should be able to approve lp token", async () => {
+            const lpTokenAmount = parseUnits("42", slpDecimals)
 
-    //         await expect(simpleSwap.connect(maker).approve(taker.address, lpTokenAmount))
-    //             .to.emit(simpleSwap, "Approval")
-    //             .withArgs(maker.address, taker.address, lpTokenAmount)
-    //     })
-    // })
+            await expect(simpleSwap.connect(maker).approve(taker.address, lpTokenAmount))
+                .to.emit(simpleSwap, "Approval")
+                .withArgs(maker.address, taker.address, lpTokenAmount)
+        })
+    })
 
-    // describe("K value checking", () => {
-    //     let K: BigNumber
+    describe("K value checking", () => {
+        let K: BigNumber
 
-    //     beforeEach("maker add liquidity", async () => {
-    //         const amountA = parseUnits("30", tokenADecimals)
-    //         const amountB = parseUnits("300", tokenBDecimals)
-    //         await simpleSwap.connect(maker).addLiquidity(amountA, amountB)
+        beforeEach("maker add liquidity", async () => {
+            const amountA = parseUnits("30", tokenADecimals)
+            const amountB = parseUnits("300", tokenBDecimals)
+            await simpleSwap.connect(maker).addLiquidity(amountA, amountB)
 
-    //         K = amountA.mul(amountB)
-    //     })
+            K = amountA.mul(amountB)
+        })
 
-    //     it("k value should be the same after swap", async () => {
-    //         const tokenIn = tokenA.address
-    //         const tokenOut = tokenB.address
-    //         const amountIn = parseUnits("70", tokenADecimals)
+        it("k value should be the same after swap", async () => {
+            const tokenIn = tokenA.address
+            const tokenOut = tokenB.address
+            const amountIn = parseUnits("70", tokenADecimals)
 
-    //         await simpleSwap.connect(taker).swap(tokenIn, tokenOut, amountIn)
+            await simpleSwap.connect(taker).swap(tokenIn, tokenOut, amountIn)
 
-    //         const [reserveA, reserveB] = await simpleSwap.getReserves()
+            const [reserveA, reserveB] = await simpleSwap.getReserves()
 
-    //         expect(reserveA.mul(reserveB)).to.be.eq(K)
-    //     })
-    // })
+            expect(reserveA.mul(reserveB)).to.be.eq(K)
+        })
+    })
 })

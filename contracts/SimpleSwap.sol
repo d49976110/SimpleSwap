@@ -2,8 +2,8 @@
 pragma solidity 0.8.17;
 
 import { ISimpleSwap } from "./interface/ISimpleSwap.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+// import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./libraries/Math.sol";
 import "./libraries/SafeMath.sol";
 import "hardhat/console.sol";
@@ -14,7 +14,7 @@ contract SimpleSwap is ISimpleSwap, ERC20 {
     address public token0;
     address public token1;
 
-    uint256 private reserve0; // uses single storage slot, accessible via getReserves
+    uint256 private reserve0;
     uint256 private reserve1;
 
     constructor(address _tokenA, address _tokenB) ERC20("SimpleSwap", "SSP") {
@@ -26,8 +26,6 @@ contract SimpleSwap is ISimpleSwap, ERC20 {
 
         (token0, token1) = _tokenA < _tokenB ? (_tokenA, _tokenB) : (_tokenB, _tokenA);
     }
-
-    // Implement core logic here
 
     /// @notice Swap tokenIn for tokenOut with amountIn
     /// @param tokenIn The address of the token to swap from
@@ -49,7 +47,7 @@ contract SimpleSwap is ISimpleSwap, ERC20 {
         } else {
             amountOut = _swap(token1, token0, amountIn);
         }
-        console.log("amountOut", amountOut);
+
         require(amountOut > 0, "SimpleSwap: INSUFFICIENT_OUTPUT_AMOUNT");
 
         _updateReserve();
@@ -106,7 +104,25 @@ contract SimpleSwap is ISimpleSwap, ERC20 {
     /// @param liquidity The amount of liquidity to remove
     /// @return amountA The amount of tokenA received
     /// @return amountB The amount of tokenB received
-    function removeLiquidity(uint256 liquidity) external override returns (uint256 amountA, uint256 amountB) {}
+    function removeLiquidity(uint256 liquidity) external override returns (uint256 amountA, uint256 amountB) {
+        require(liquidity > 0, "SimpleSwap: INSUFFICIENT_LIQUIDITY_BURNED");
+
+        // transfer user liquidity to this contract
+        _transfer(msg.sender, address(this), liquidity);
+
+        //effect
+        uint256 _totalSupply = totalSupply();
+        amountA = (liquidity * reserve0) / _totalSupply;
+        amountB = (liquidity * reserve1) / _totalSupply;
+
+        _burn(address(this), liquidity);
+
+        //interaction
+        IERC20(token0).transfer(msg.sender, amountA);
+        IERC20(token1).transfer(msg.sender, amountB);
+
+        emit RemoveLiquidity(msg.sender, amountA, amountB, liquidity);
+    }
 
     /// @notice Get the reserves of the pool
     /// @return reserveA The reserve of tokenA
@@ -167,12 +183,15 @@ contract SimpleSwap is ISimpleSwap, ERC20 {
         //transferFrom token to this contract
         IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
 
-        uint256 balanceIn = IERC20(tokenIn).balanceOf(address(this));
-        uint256 balanceOut = IERC20(tokenOut).balanceOf(address(this));
-        // 假設以A換B：amountOut = (reserve0 * reserve1) / (amountIn + reserve0);
-        uint256 leftTokenOut = (reserve0 * reserve1) / balanceIn;
-        amountOut = balanceOut - leftTokenOut;
-        // give token back
+        // effect
+        amountOut = (reserve1 * amountIn) / (amountIn + reserve0);
+
+        uint256 adjustToken0 = reserve0 + amountIn;
+        uint256 adjustToken1 = reserve1 - amountOut;
+
+        require(adjustToken0 * adjustToken1 >= reserve0 * reserve1, "SimpleSwap: K");
+
+        // interaction
         IERC20(tokenOut).transfer(msg.sender, amountOut);
     }
 
