@@ -151,25 +151,23 @@ contract SimpleSwap is ISimpleSwap, ERC20 {
     ) internal returns (uint256 amountA, uint256 amountB) {
         uint256 _totalSupply = totalSupply();
 
-        uint256 hypotheticalAToken = (amountBIn * reserve0) / reserve1; //以B為主，計算A的數量
-        uint256 hypotheticalBToken = (amountAIn * reserve1) / reserve0; //以A為主，計算B的數量
+        uint256 actualTokenA = (amountBIn * reserve0) / reserve1; //以B為主，計算A的數量
+        uint256 actualTokenB = (amountAIn * reserve1) / reserve0; //以A為主，計算B的數量
 
-        if (amountBIn > hypotheticalBToken) {
+        if (amountBIn > actualTokenB) {
             //以A為主，歸還B
-            uint256 actualAmount = ((reserve1 * amountAIn) / reserve0);
-            uint256 returnToken = amountBIn - actualAmount;
+            uint256 returnToken = amountBIn - actualTokenB;
 
             IERC20(token1).transfer(msg.sender, returnToken);
 
-            return (amountAIn, actualAmount);
-        } else if (amountAIn > hypotheticalAToken) {
+            return (amountAIn, actualTokenB);
+        } else if (amountAIn > actualTokenA) {
             // 以B為主，歸還A
-            uint256 actualAmount = ((reserve0 * amountBIn) / reserve1);
-            uint256 returnToken = amountAIn - actualAmount;
+            uint256 returnToken = amountAIn - actualTokenA;
 
             IERC20(token0).transfer(msg.sender, returnToken);
 
-            return (actualAmount, amountBIn);
+            return (actualTokenA, amountBIn);
         } else {
             return (amountAIn, amountBIn);
         }
