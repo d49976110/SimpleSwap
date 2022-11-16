@@ -41,6 +41,7 @@ contract SimpleSwap is ISimpleSwap, ERC20 {
         require(tokenOut == token0 || tokenOut == token1, "SimpleSwap: INVALID_TOKEN_OUT");
         require(tokenIn != tokenOut, "SimpleSwap: IDENTICAL_ADDRESS");
         require(amountIn > 0, "SimpleSwap: INSUFFICIENT_INPUT_AMOUNT");
+
         //check which is token0 & token1
         if (tokenIn < tokenOut) {
             amountOut = _swap(token0, token1, amountIn);
@@ -94,9 +95,6 @@ contract SimpleSwap is ISimpleSwap, ERC20 {
         // event
         emit AddLiquidity(msg.sender, amountA, amountB, liquidity);
 
-        // // change reserve = balance
-        // reserve0 = IERC20(token0).balanceOf(address(this));
-        // reserve1 = IERC20(token1).balanceOf(address(this));
         _updateReserve();
     }
 
