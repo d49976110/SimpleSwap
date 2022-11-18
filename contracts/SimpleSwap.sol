@@ -3,7 +3,6 @@ pragma solidity 0.8.17;
 
 import { ISimpleSwap } from "./interface/ISimpleSwap.sol";
 import { ERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-// import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./libraries/Math.sol";
 import "./libraries/SafeMath.sol";
 import "hardhat/console.sol";
@@ -73,18 +72,20 @@ contract SimpleSwap is ISimpleSwap, ERC20 {
     {
         require(amountAIn > 0 && amountBIn > 0, "SimpleSwap: INSUFFICIENT_INPUT_AMOUNT");
 
-        // transferFrom
+        // transferFrom user to this contract
         IERC20(token0).transferFrom(msg.sender, address(this), amountAIn);
         IERC20(token1).transferFrom(msg.sender, address(this), amountBIn);
 
-        // liquidity
         uint256 _totalSupply = totalSupply();
 
         if (_totalSupply == 0) {
+            // first time
             liquidity = Math.sqrt(amountAIn.mul(amountBIn));
             (amountA, amountB) = (amountAIn, amountBIn);
         } else {
+            //not first time
             liquidity = Math.min(amountAIn.mul(_totalSupply) / reserve0, amountBIn.mul(_totalSupply) / reserve1);
+
             //return more token
             (amountA, amountB) = returnMoreToken(amountAIn, amountBIn, liquidity);
         }
@@ -142,6 +143,10 @@ contract SimpleSwap is ISimpleSwap, ERC20 {
         tokenB = token1;
     }
 
+    ///@dev return more token to user
+    ///@param amountAIn tokenA amount which would be added to the pool
+    ///@param amountBIn tokenB amount which would be added to the pool
+    ///@param liquidity the min liquidity calculation of tokenA and tokenB
     function returnMoreToken(
         uint256 amountAIn,
         uint256 amountBIn,
@@ -149,26 +154,17 @@ contract SimpleSwap is ISimpleSwap, ERC20 {
     ) internal returns (uint256 amountA, uint256 amountB) {
         uint256 _totalSupply = totalSupply();
 
-        uint256 actualTokenA = (amountBIn * reserve0) / reserve1; //以B為主，計算A的數量
-        uint256 actualTokenB = (amountAIn * reserve1) / reserve0; //以A為主，計算B的數量
+        uint256 actualTokenA = (liquidity * reserve0) / _totalSupply;
+        uint256 actualTokenB = (liquidity * reserve1) / _totalSupply;
 
-        if (amountBIn > actualTokenB) {
-            //以A為主，歸還B
-            uint256 returnToken = amountBIn - actualTokenB;
-
-            IERC20(token1).transfer(msg.sender, returnToken);
-
-            return (amountAIn, actualTokenB);
-        } else if (amountAIn > actualTokenA) {
-            // 以B為主，歸還A
-            uint256 returnToken = amountAIn - actualTokenA;
-
-            IERC20(token0).transfer(msg.sender, returnToken);
-
-            return (actualTokenA, amountBIn);
-        } else {
-            return (amountAIn, amountBIn);
+        if (amountAIn > actualTokenA) {
+            uint256 returnAmount = amountAIn - actualTokenA;
+            IERC20(token0).transfer(msg.sender, returnAmount);
+        } else if (amountBIn > actualTokenB) {
+            uint256 returnAmount = amountBIn - actualTokenB;
+            IERC20(token1).transfer(msg.sender, returnAmount);
         }
+        return (actualTokenA, actualTokenB);
     }
 
     function _swap(
