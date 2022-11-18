@@ -43,9 +43,9 @@ contract SimpleSwap is ISimpleSwap, ERC20 {
 
         //check which is token0 & token1
         if (tokenIn < tokenOut) {
-            amountOut = _swap(token0, token1, amountIn);
+            amountOut = _swap(token0, token1, reserve0, reserve1, amountIn);
         } else {
-            amountOut = _swap(token1, token0, amountIn);
+            amountOut = _swap(token1, token0, reserve1, reserve0, amountIn);
         }
 
         require(amountOut > 0, "SimpleSwap: INSUFFICIENT_OUTPUT_AMOUNT");
@@ -164,24 +164,28 @@ contract SimpleSwap is ISimpleSwap, ERC20 {
             uint256 returnAmount = amountBIn - actualTokenB;
             IERC20(token1).transfer(msg.sender, returnAmount);
         }
+
         return (actualTokenA, actualTokenB);
     }
 
     function _swap(
         address tokenIn,
         address tokenOut,
+        uint256 reserveIn,
+        uint256 reserveOut,
         uint256 amountIn
     ) internal returns (uint256 amountOut) {
         //transferFrom token to this contract
         IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
 
         // effect
-        amountOut = (reserve1 * amountIn) / (amountIn + reserve0);
+        // amountOut = reserveOut * amountIn / (reserveIn + amountIn);
+        amountOut = (reserveOut * amountIn) / (reserveIn + amountIn);
 
-        uint256 adjustToken0 = reserve0 + amountIn;
-        uint256 adjustToken1 = reserve1 - amountOut;
+        uint256 adjustToken0 = reserveIn + amountIn;
+        uint256 adjustToken1 = reserveOut - amountOut;
 
-        require(adjustToken0 * adjustToken1 >= reserve0 * reserve1, "SimpleSwap: K");
+        require(adjustToken0 * adjustToken1 >= reserveIn * reserveOut, "SimpleSwap: K");
 
         // interaction
         IERC20(tokenOut).transfer(msg.sender, amountOut);
