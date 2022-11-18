@@ -87,7 +87,7 @@ contract SimpleSwap is ISimpleSwap, ERC20 {
             liquidity = Math.min(amountAIn.mul(_totalSupply) / reserve0, amountBIn.mul(_totalSupply) / reserve1);
 
             //return more token
-            (amountA, amountB) = returnMoreToken(amountAIn, amountBIn, liquidity);
+            (amountA, amountB) = _returnMoreToken(amountAIn, amountBIn, liquidity);
         }
 
         // transfer liquidity to msg.sender
@@ -147,7 +147,7 @@ contract SimpleSwap is ISimpleSwap, ERC20 {
     ///@param amountAIn tokenA amount which would be added to the pool
     ///@param amountBIn tokenB amount which would be added to the pool
     ///@param liquidity the min liquidity calculation of tokenA and tokenB
-    function returnMoreToken(
+    function _returnMoreToken(
         uint256 amountAIn,
         uint256 amountBIn,
         uint256 liquidity
