@@ -3,12 +3,15 @@ pragma solidity 0.8.17;
 
 import { ISimpleSwap } from "./interface/ISimpleSwap.sol";
 import { ERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./libraries/Math.sol";
 import "./libraries/SafeMath.sol";
 import "hardhat/console.sol";
 
-contract SimpleSwap is ISimpleSwap, ERC20 {
+contract SimpleSwap is ISimpleSwap, ERC20, ReentrancyGuard {
     using SafeMath for uint256;
+    using Address for address;
 
     address public token0;
     address public token1;
@@ -17,10 +20,8 @@ contract SimpleSwap is ISimpleSwap, ERC20 {
     uint256 private reserve1;
 
     constructor(address _tokenA, address _tokenB) ERC20("SimpleSwap", "SSP") {
-        bytes memory codeA = _tokenA.code;
-        bytes memory codeB = _tokenB.code;
-        require(codeA.length > 0, "SimpleSwap: TOKENA_IS_NOT_CONTRACT");
-        require(codeB.length > 0, "SimpleSwap: TOKENB_IS_NOT_CONTRACT");
+        require(_tokenA.isContract(), "SimpleSwap: TOKENA_IS_NOT_CONTRACT");
+        require(_tokenB.isContract(), "SimpleSwap: TOKENB_IS_NOT_CONTRACT");
         require(_tokenA != _tokenB, "SimpleSwap: TOKENA_TOKENB_IDENTICAL_ADDRESS");
 
         (token0, token1) = _tokenA < _tokenB ? (_tokenA, _tokenB) : (_tokenB, _tokenA);
@@ -35,7 +36,7 @@ contract SimpleSwap is ISimpleSwap, ERC20 {
         address tokenIn,
         address tokenOut,
         uint256 amountIn
-    ) external override returns (uint256 amountOut) {
+    ) external override nonReentrant returns (uint256 amountOut) {
         require(tokenIn == token0 || tokenIn == token1, "SimpleSwap: INVALID_TOKEN_IN");
         require(tokenOut == token0 || tokenOut == token1, "SimpleSwap: INVALID_TOKEN_OUT");
         require(tokenIn != tokenOut, "SimpleSwap: IDENTICAL_ADDRESS");
@@ -64,6 +65,7 @@ contract SimpleSwap is ISimpleSwap, ERC20 {
     function addLiquidity(uint256 amountAIn, uint256 amountBIn)
         external
         override
+        nonReentrant
         returns (
             uint256 amountA,
             uint256 amountB,
@@ -103,7 +105,12 @@ contract SimpleSwap is ISimpleSwap, ERC20 {
     /// @param liquidity The amount of liquidity to remove
     /// @return amountA The amount of tokenA received
     /// @return amountB The amount of tokenB received
-    function removeLiquidity(uint256 liquidity) external override returns (uint256 amountA, uint256 amountB) {
+    function removeLiquidity(uint256 liquidity)
+        external
+        override
+        nonReentrant
+        returns (uint256 amountA, uint256 amountB)
+    {
         require(liquidity > 0, "SimpleSwap: INSUFFICIENT_LIQUIDITY_BURNED");
 
         // transfer user liquidity to this contract
